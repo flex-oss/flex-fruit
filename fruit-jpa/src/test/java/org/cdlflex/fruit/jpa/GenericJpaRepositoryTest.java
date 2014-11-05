@@ -1,0 +1,300 @@
+/**
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+package org.cdlflex.fruit.jpa;
+
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+
+import java.util.Arrays;
+import java.util.List;
+
+import org.cdlflex.fruit.Connective;
+import org.cdlflex.fruit.Filter;
+import org.cdlflex.fruit.Operator;
+import org.cdlflex.fruit.OrderBy;
+import org.cdlflex.fruit.Predicate;
+import org.cdlflex.fruit.SortOrder;
+import org.cdlflex.fruit.jpa.model.ManagedEntity;
+import org.cdlflex.fruit.jpa.model.NoConstructorModel;
+import org.junit.Before;
+import org.junit.Test;
+
+@SuppressWarnings("unchecked")
+public abstract class GenericJpaRepositoryTest<E extends ManagedEntity, R extends JpaRepository<E>> extends
+        AbstractJpaTest {
+
+    private R repository;
+
+    @Before
+    public void setUpRepository() throws Exception {
+        repository = newRepository();
+        repository.setEntityManager(getEntityManager());
+    }
+
+    @Test
+    public void repository_wasCreated() throws Exception {
+        assertNotNull(repository);
+    }
+
+    @Test
+    public void create_createsNewEntityOfCorrectClass() throws Exception {
+        E e = repository.create();
+
+        assertEquals(repository.getEntityClass(), e.getClass());
+    }
+
+    @Test
+    public void save_setsIdCorrectly() throws Exception {
+        E e = repository.create();
+
+        repository.save(e);
+        assertNotNull(e.getId());
+        assertThat(e.getId(), is(1L));
+    }
+
+    @Test
+    public void save_collection_setsIdsCorrectly() throws Exception {
+        E e1 = repository.create();
+        E e2 = repository.create();
+
+        repository.save(Arrays.asList(e1, e2));
+        assertNotNull(e1.getId());
+        assertNotNull(e2.getId());
+
+        assertThat(e1.getId(), is(1L));
+        assertThat(e2.getId(), is(2L));
+    }
+
+    @Test
+    public void get_returnsCorrectEntity() throws Exception {
+        E e = repository.create();
+
+        repository.save(e);
+
+        E e1 = repository.get(1L);
+        assertThat(e1, is(e));
+    }
+
+    @Test
+    public void getAll_returnsAllEntities() throws Exception {
+        List<E> all = repository.getAll();
+        assertThat(all.size(), is(0));
+
+        E e1 = repository.create();
+        E e2 = repository.create();
+
+        repository.save(Arrays.asList(e1, e2));
+
+        all = repository.getAll();
+        assertThat(all.size(), is(2));
+        assertThat(all, hasItem(e1));
+        assertThat(all, hasItem(e2));
+    }
+
+    @Test
+    public void getAll_orderBy_returnsAllEntitiesInCorrectOrder() throws Exception {
+        E e1 = repository.create();
+        E e2 = repository.create();
+        E e3 = repository.create();
+
+        repository.save(Arrays.asList(e1, e2, e3));
+
+        List<E> result = repository.getAll(new OrderBy("id", SortOrder.DESC));
+
+        assertThat(result.size(), is(3));
+        assertEquals(e3, result.get(0));
+        assertEquals(e2, result.get(1));
+        assertEquals(e1, result.get(2));
+    }
+
+    @Test
+    public void getPage_withOrderBy_returnsEntitiesInCorrectOrder() throws Exception {
+        E e1 = repository.create();
+        E e2 = repository.create();
+        E e3 = repository.create();
+
+        repository.save(Arrays.asList(e1, e2, e3));
+
+        List<E> result = repository.getPage(new OrderBy("id", SortOrder.DESC), 2, 1);
+
+        assertThat(result.size(), is(2));
+        assertEquals(e2, result.get(0));
+        assertEquals(e1, result.get(1));
+    }
+
+    @Test
+    public void getPage_returnsCorrectEntities() throws Exception {
+        E e1 = repository.create();
+        E e2 = repository.create();
+        E e3 = repository.create();
+        E e4 = repository.create();
+
+        repository.save(Arrays.asList(e1, e2, e3, e4));
+
+        List<E> page = repository.getPage(2, 1);
+
+        assertThat(page.size(), is(2));
+        assertThat(page, hasItem(e2));
+        assertThat(page, hasItem(e3));
+    }
+
+    @Test
+    public void count_returnsCorrectAmount() throws Exception {
+        E e1 = repository.create();
+        E e2 = repository.create();
+        E e3 = repository.create();
+        E e4 = repository.create();
+
+        repository.save(Arrays.asList(e1, e2));
+
+        assertThat(repository.count(), is(2L));
+
+        repository.save(Arrays.asList(e3, e4));
+
+        assertThat(repository.count(), is(4L));
+    }
+
+    @Test
+    public void count_withFilter_returnsCorrectAmount() throws Exception {
+        E e1 = repository.create();
+        E e2 = repository.create();
+        E e3 = repository.create();
+        E e4 = repository.create();
+
+        repository.save(Arrays.asList(e1, e2, e3, e4));
+
+        assertEquals(0, repository.count(new Filter(new Predicate("id", "<", 1))));
+        assertEquals(1, repository.count(new Filter(new Predicate("id", "=", 2))));
+        assertEquals(2, repository.count(new Filter(new Predicate("id", ">", 2))));
+        assertEquals(3, repository.count(new Filter(new Predicate("id", ">=", 2))));
+    }
+
+    @Test
+    public void findByFilter_eq_behavesCorrectly() throws Exception {
+        E e1 = repository.create();
+        E e2 = repository.create();
+        E e3 = repository.create();
+
+        repository.save(Arrays.asList(e1, e2, e3));
+
+        Filter filter = new Filter().add("id", Operator.EQ, 2L);
+        List<E> result = getRepository().find(filter);
+
+        assertThat(result.size(), is(1));
+        assertThat(result, hasItems(e2));
+    }
+
+    @Test
+    public void findByFilter_eq_not_behavesCorrectly() throws Exception {
+        E e1 = repository.create();
+        E e2 = repository.create();
+        E e3 = repository.create();
+
+        repository.save(Arrays.asList(e1, e2, e3));
+
+        Filter filter = new Filter().add(new Predicate("id", Operator.EQ, 2L).not());
+        List<E> result = getRepository().find(filter);
+
+        assertThat(result.size(), is(2));
+        assertThat(result, hasItems(e1, e3));
+    }
+
+    @Test
+    public void findByFilter_or_eq_behavesCorrectly() throws Exception {
+        E e1 = repository.create();
+        E e2 = repository.create();
+        E e3 = repository.create();
+
+        repository.save(Arrays.asList(e1, e2, e3));
+
+        Filter filter = new Filter(Connective.OR).add(new Predicate("id", "=", 1L)).add(new Predicate("id", 2L));
+        List<E> result = getRepository().find(filter);
+
+        assertThat(result.size(), is(2));
+        assertThat(result, hasItems(e1, e2));
+    }
+
+    @Test
+    public void findPageWithFilter_behavesCorrectly() throws Exception {
+        E e1 = repository.create();
+        E e2 = repository.create();
+        E e3 = repository.create();
+        E e4 = repository.create();
+        E e5 = repository.create();
+
+        repository.save(Arrays.asList(e1, e2, e3, e4, e5));
+
+        Filter filter = new Filter().add("id", Operator.GT, 2L);
+        List<E> result = getRepository().findPage(filter, new OrderBy("id", SortOrder.DESC), 2, 1);
+
+        assertEquals(2, result.size());
+        assertEquals(e4, result.get(0));
+        assertEquals(e3, result.get(1));
+    }
+
+    @Test
+    public void findOneByAttribute_returnsCorrectResult() throws Exception {
+        E e1 = repository.create();
+        E e2 = repository.create();
+
+        repository.save(Arrays.asList(e1, e2));
+
+        E obj = repository.findOneByAttribute("id", 2L);
+        assertEquals(e2, obj);
+    }
+
+    @Test
+    public void findOneByAttribute_existingAttribute_nonExistingValue_returnsNull() throws Exception {
+        E e1 = repository.create();
+
+        repository.save(e1);
+
+        assertNull(repository.findOneByAttribute("id", 2L));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void findOneByAttribute_nonExistingAttribute_throwsIllegalArgumentException() throws Exception {
+        try {
+            repository.save(repository.create());
+        } catch (IllegalArgumentException e) {
+            fail("Exception caught too early");
+        }
+
+        assertNull(repository.findOneByAttribute("doesnotexist", 1L));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void createRepository_withNullClass_throwsException() throws Exception {
+        new JpaRepository<>(null);
+    }
+
+    @Test
+    public void create_nonExistingDefaultConstructor_returnsNull() throws Exception {
+        JpaRepository<NoConstructorModel> rep = new JpaRepository<>(NoConstructorModel.class);
+
+        assertNull(rep.create());
+    }
+
+    public R getRepository() {
+        return repository;
+    }
+
+    protected abstract R newRepository();
+}
