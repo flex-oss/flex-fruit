@@ -16,10 +16,36 @@
 
   <name>Fruit</name>
 
+  <description>
+    Fruit is a simple object store API layer to abstract common DAO-type persistence use-cases.
+  </description>
+
   <modules>
     <module>fruit-core</module>
     <module>fruit-jpa</module>
   </modules>
+
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>The CDL-Flex developer team</name>
+      <organization>CDL-Flex</organization>
+      <organizationUrl>http://cdlflex.org</organizationUrl>
+      <email>cdlflex@gmail.com</email>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:git://github.com:flex-oss/flex-fruit.git</connection>
+    <developerConnection>scm:git:git@github.com:flex-oss/flex-fruit.git</developerConnection>
+    <url>https://github.com/flex-oss/flex-fruit</url>
+  </scm>
 
   <properties>
     <jdk.version>1.7</jdk.version>
