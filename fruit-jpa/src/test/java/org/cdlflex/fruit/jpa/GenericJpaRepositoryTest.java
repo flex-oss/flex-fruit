@@ -25,6 +25,8 @@ import static org.junit.Assert.fail;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.persistence.EntityTransaction;
+
 import org.cdlflex.fruit.Connective;
 import org.cdlflex.fruit.Filter;
 import org.cdlflex.fruit.Operator;
@@ -80,6 +82,43 @@ public abstract class GenericJpaRepositoryTest<E extends ManagedEntity, R extend
 
         assertThat(e1.getId(), is(1L));
         assertThat(e2.getId(), is(2L));
+    }
+
+    @Test
+    public void remove_removesEntityFromContext() throws Exception {
+        E e1 = repository.create();
+
+        EntityTransaction tx = getEntityManager().getTransaction();
+        tx.begin();
+        getEntityManager().persist(e1);
+        tx.commit();
+
+        Long id = e1.getId();
+        assertNotNull(getEntityManager().find(repository.getEntityClass(), id));
+        repository.remove(e1);
+        assertNull(getEntityManager().find(repository.getEntityClass(), id));
+    }
+
+    @Test
+    public void remove_collection_removesEntityFromContext() throws Exception {
+        E e1 = repository.create();
+        E e2 = repository.create();
+        E e3 = repository.create();
+
+        EntityTransaction tx = getEntityManager().getTransaction();
+        tx.begin();
+        getEntityManager().persist(e1);
+        getEntityManager().persist(e2);
+        getEntityManager().persist(e3);
+        tx.commit();
+
+        assertNotNull(getEntityManager().find(repository.getEntityClass(), e1.getId()));
+        assertNotNull(getEntityManager().find(repository.getEntityClass(), e2.getId()));
+        assertNotNull(getEntityManager().find(repository.getEntityClass(), e3.getId()));
+        repository.remove(Arrays.asList(e1, e2));
+        assertNull(getEntityManager().find(repository.getEntityClass(), e1.getId()));
+        assertNull(getEntityManager().find(repository.getEntityClass(), e2.getId()));
+        assertNotNull(getEntityManager().find(repository.getEntityClass(), e3.getId()));
     }
 
     @Test

@@ -64,6 +64,22 @@ public interface Repository<T extends Identifiable<?>> {
     void save(Collection<T> entity);
 
     /**
+     * Removes the given entity from the persistence structure.
+     * 
+     * @param entity the entity to remove
+     * @throws PersistenceException if an exception occurs in the underlying persistence system
+     */
+    void remove(T entity);
+
+    /**
+     * Removes all given entities from the persistence structure.
+     * 
+     * @param entities the entities to remove
+     * @throws PersistenceException if an exception occurs in the underlying persistence system
+     */
+    void remove(Collection<T> entities);
+
+    /**
      * Returns the entity with the given id.
      *
      * @param id the entity id

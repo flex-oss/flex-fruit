@@ -130,6 +130,48 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
     }
 
     @Override
+    public void remove(final T entity) {
+        execute(new EntityManagerCommand() {
+            @Override
+            public void execute(EntityManager em, EntityTransaction tx) {
+                em.remove(entity);
+                onAfterRemove(entity);
+            }
+
+            @Override
+            public void onAfterCommit(EntityManager em, EntityTransaction tx) {
+            }
+
+            @Override
+            public void onException(EntityManager em, EntityTransaction tx, Exception e) {
+                LOG.error("Error while removing entity {}", entity, e);
+            }
+        });
+    }
+
+    @Override
+    public void remove(final Collection<T> entities) {
+        execute(new EntityManagerCommand() {
+            @Override
+            public void execute(EntityManager em, EntityTransaction tx) {
+                for (T entity : entities) {
+                    em.remove(entity);
+                    onAfterRemove(entity);
+                }
+            }
+
+            @Override
+            public void onAfterCommit(EntityManager em, EntityTransaction tx) {
+            }
+
+            @Override
+            public void onException(EntityManager em, EntityTransaction tx, Exception e) {
+                LOG.error("Error while removing {} entities", entities.size(), e);
+            }
+        });
+    }
+
+    @Override
     public T get(Object id) {
         return getEntityManager().find(getEntityClass(), id);
     }
@@ -283,6 +325,15 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
      * @param entity the entity being persisted
      */
     protected void onBeforePersist(T entity) {
+        // hook
+    }
+
+    /**
+     * Called after an entity was removed from the entity manager.
+     *
+     * @param entity the entity being removed
+     */
+    protected void onAfterRemove(T entity) {
         // hook
     }
 
