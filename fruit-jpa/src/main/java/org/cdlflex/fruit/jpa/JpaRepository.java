@@ -29,6 +29,7 @@ import javax.persistence.criteria.Root;
 import org.cdlflex.fruit.Filter;
 import org.cdlflex.fruit.Identifiable;
 import org.cdlflex.fruit.OrderBy;
+import org.cdlflex.fruit.PersistenceException;
 import org.cdlflex.fruit.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,12 +71,20 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
 
     @Override
     public long count() {
-        return createCountQuery().getSingleResult();
+        try {
+            return createCountQuery().getSingleResult();
+        } catch (javax.persistence.PersistenceException e) {
+            throw new PersistenceException(e);
+        }
     }
 
     @Override
     public long count(Filter filter) {
-        return getEntityManager().createQuery(translateCountQuery(filter)).getSingleResult();
+        try {
+            return getEntityManager().createQuery(translateCountQuery(filter)).getSingleResult();
+        } catch (javax.persistence.PersistenceException e) {
+            throw new PersistenceException(e);
+        }
     }
 
     @Override
@@ -122,46 +131,68 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
 
     @Override
     public T get(Object id) {
-        return entityManager.find(getEntityClass(), id);
+        return getEntityManager().find(getEntityClass(), id);
     }
 
     @Override
     public List<T> getAll() {
-        return createBasicQuery().getResultList();
+        try {
+            return createBasicQuery().getResultList();
+        } catch (javax.persistence.PersistenceException e) {
+            throw new PersistenceException(e);
+        }
     }
 
     @Override
     public List<T> getAll(OrderBy order) {
-        return entityManager.createQuery(createBasicCriteriaQuery(order)).getResultList();
+        try {
+            return getEntityManager().createQuery(createBasicCriteriaQuery(order)).getResultList();
+        } catch (javax.persistence.PersistenceException e) {
+            throw new PersistenceException(e);
+        }
     }
 
     @Override
     public List<T> getPage(int limit, int offset) {
-        TypedQuery<T> q = createBasicQuery();
-        q.setFirstResult(offset).setMaxResults(limit);
-
-        return q.getResultList();
+        try {
+            TypedQuery<T> q = createBasicQuery();
+            q.setFirstResult(offset).setMaxResults(limit);
+            return q.getResultList();
+        } catch (javax.persistence.PersistenceException e) {
+            throw new PersistenceException(e);
+        }
     }
 
     @Override
     public List<T> getPage(OrderBy order, int limit, int offset) {
-        TypedQuery<T> q = entityManager.createQuery(createBasicCriteriaQuery(order));
-        q.setFirstResult(offset).setMaxResults(limit);
-
-        return q.getResultList();
+        try {
+            TypedQuery<T> q = getEntityManager().createQuery(createBasicCriteriaQuery(order));
+            q.setFirstResult(offset).setMaxResults(limit);
+            return q.getResultList();
+        } catch (javax.persistence.PersistenceException e) {
+            throw new PersistenceException(e);
+        }
     }
 
     @Override
     public List<T> find(Filter filter) {
-        return getEntityManager().createQuery(translateQuery(filter)).getResultList();
+        try {
+            return getEntityManager().createQuery(translateQuery(filter)).getResultList();
+        } catch (javax.persistence.PersistenceException e) {
+            throw new PersistenceException(e);
+        }
     }
 
     @Override
     // CHECKSTYLE:OFF query api will be abstracted in the future
     public List<T> findPage(Filter filter, OrderBy order, int limit, int offset) {
         // CHECKSTYLE:ON
-        TypedQuery<T> query = getEntityManager().createQuery(translateQuery(filter, order));
-        return query.setFirstResult(offset).setMaxResults(limit).getResultList();
+        try {
+            TypedQuery<T> query = getEntityManager().createQuery(translateQuery(filter, order));
+            return query.setFirstResult(offset).setMaxResults(limit).getResultList();
+        } catch (javax.persistence.PersistenceException e) {
+            throw new PersistenceException(e);
+        }
     }
 
     public Class<T> getEntityClass() {
@@ -261,7 +292,11 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
      * @param command the command to execute
      */
     protected void execute(EntityManagerCommand command) {
-        new EntityManagerCommandExecutor(entityManager).execute(command);
+        try {
+            new EntityManagerCommandExecutor(getEntityManager()).execute(command);
+        } catch (javax.persistence.PersistenceException e) {
+            throw new PersistenceException(e);
+        }
     }
 
     /**

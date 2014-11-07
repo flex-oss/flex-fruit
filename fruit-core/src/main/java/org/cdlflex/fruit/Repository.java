@@ -34,6 +34,7 @@ public interface Repository<T extends Identifiable<?>> {
      * Returns the amount of entities this repository manages.
      *
      * @return the amount of entities
+     * @throws PersistenceException if an exception occurs in the underlying persistence system
      */
     long count();
 
@@ -42,6 +43,7 @@ public interface Repository<T extends Identifiable<?>> {
      *
      * @param filter the filter
      * @return the amount of entities
+     * @throws PersistenceException if an exception occurs in the underlying persistence system
      */
     long count(Filter filter);
 
@@ -49,6 +51,7 @@ public interface Repository<T extends Identifiable<?>> {
      * Persists the given entity. This is an "upersert" command.
      *
      * @param entity the entity to persist
+     * @throws PersistenceException if an exception occurs in the underlying persistence system
      */
     void save(T entity);
 
@@ -56,6 +59,7 @@ public interface Repository<T extends Identifiable<?>> {
      * Persists the given collection of entities. This is an "upersert" command.
      *
      * @param entity the entities to persist
+     * @throws PersistenceException if an exception occurs in the underlying persistence system
      */
     void save(Collection<T> entity);
 
@@ -64,6 +68,7 @@ public interface Repository<T extends Identifiable<?>> {
      *
      * @param id the entity id
      * @return the entity with the given id
+     * @throws PersistenceException if an exception occurs in the underlying persistence system
      */
     T get(Object id);
 
@@ -71,6 +76,7 @@ public interface Repository<T extends Identifiable<?>> {
      * Returns all entities managed by this repository.
      *
      * @return a list of entities
+     * @throws PersistenceException if an exception occurs in the underlying persistence system
      */
     List<T> getAll();
 
@@ -79,6 +85,7 @@ public interface Repository<T extends Identifiable<?>> {
      *
      * @param order the order by specification
      * @return a list of entities
+     * @throws PersistenceException if an exception occurs in the underlying persistence system
      */
     List<T> getAll(OrderBy order);
 
@@ -88,6 +95,7 @@ public interface Repository<T extends Identifiable<?>> {
      * @param limit the amount of entities that should be returned
      * @param offset the starting index
      * @return a page of entities
+     * @throws PersistenceException if an exception occurs in the underlying persistence system
      */
     List<T> getPage(int limit, int offset);
 
@@ -98,6 +106,7 @@ public interface Repository<T extends Identifiable<?>> {
      * @param limit the amount of entities that should be returned
      * @param offset the starting index
      * @return a page of entities
+     * @throws PersistenceException if an exception occurs in the underlying persistence system
      */
     List<T> getPage(OrderBy order, int limit, int offset);
 
@@ -106,6 +115,7 @@ public interface Repository<T extends Identifiable<?>> {
      *
      * @param filter the filter
      * @return a list of entities
+     * @throws PersistenceException if an exception occurs in the underlying persistence system
      */
     List<T> find(Filter filter);
 
@@ -117,6 +127,7 @@ public interface Repository<T extends Identifiable<?>> {
      * @param limit the amount of entities that should be returned
      * @param offset the starting index
      * @return a page of entities
+     * @throws PersistenceException if an exception occurs in the underlying persistence system
      */
     // CHECKSTYLE:OFF query API will be abstracted in the future
     List<T> findPage(Filter filter, OrderBy order, int limit, int offset);
