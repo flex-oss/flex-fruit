@@ -33,7 +33,7 @@ import org.cdlflex.fruit.SortSpecification;
 /**
  * Maps the {@code org.cdlflex.fruit} data model to {@code javax.persistence.criteria} classes.
  */
-public class JpaCriteriaMapper {
+public class CriteriaMapper {
 
     private final Root<?> root;
     private final CriteriaBuilder cb;
@@ -44,7 +44,7 @@ public class JpaCriteriaMapper {
      * @param root the root from which to select from
      * @param criteriaBuilder the criteria builder used internally
      */
-    public JpaCriteriaMapper(Root<?> root, CriteriaBuilder criteriaBuilder) {
+    public CriteriaMapper(Root<?> root, CriteriaBuilder criteriaBuilder) {
         this.root = root;
         this.cb = criteriaBuilder;
     }

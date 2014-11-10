@@ -64,7 +64,7 @@ public class QueryFactory<T> {
         CriteriaQuery<Long> query = cb.createQuery(Long.class);
         Root<T> from = query.from(getEntityClass());
 
-        Predicate where = new JpaCriteriaMapper(from, cb).create(filter);
+        Predicate where = new CriteriaMapper(from, cb).create(filter);
 
         return getEntityManager().createQuery(query.select(cb.count(from)).where(where));
     }
@@ -92,7 +92,7 @@ public class QueryFactory<T> {
         CriteriaQuery<T> query = cb.createQuery(getEntityClass());
         Root<T> from = query.from(getEntityClass());
 
-        Predicate where = new JpaCriteriaMapper(from, cb).create(filter);
+        Predicate where = new CriteriaMapper(from, cb).create(filter);
 
         return getEntityManager().createQuery(query.where(where));
     }
@@ -108,7 +108,7 @@ public class QueryFactory<T> {
         CriteriaQuery<T> query = cb.createQuery(getEntityClass());
         Root<T> from = query.from(getEntityClass());
 
-        JpaCriteriaMapper criteriaMapper = new JpaCriteriaMapper(from, cb);
+        CriteriaMapper criteriaMapper = new CriteriaMapper(from, cb);
 
         return getEntityManager().createQuery(
                 query.where(criteriaMapper.create(filter)).orderBy(criteriaMapper.create(orderBy)));
@@ -124,7 +124,7 @@ public class QueryFactory<T> {
         CriteriaQuery<T> query = cb.createQuery(getEntityClass());
         Root<T> from = query.from(getEntityClass());
 
-        query.orderBy(new JpaCriteriaMapper(from, cb).create(order));
+        query.orderBy(new CriteriaMapper(from, cb).create(order));
 
         return getEntityManager().createQuery(query);
     }
