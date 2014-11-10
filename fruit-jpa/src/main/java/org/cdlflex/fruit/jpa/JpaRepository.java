@@ -23,7 +23,6 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
 import org.cdlflex.fruit.Filter;
@@ -51,12 +50,40 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
      */
     private final Class<T> entityClass;
 
+    private QueryFactory<T> queryFactory;
+
     public JpaRepository(Class<T> entityClass) {
         if (entityClass == null) {
             throw new IllegalArgumentException("entityClass can not be null");
         }
 
         this.entityClass = entityClass;
+    }
+
+    public Class<T> getEntityClass() {
+        return entityClass;
+    }
+
+    public void setEntityManager(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
+
+    public EntityManager getEntityManager() {
+        return entityManager;
+    }
+
+    /**
+     * Lazy-init methods for a {@link org.cdlflex.fruit.jpa.QueryFactory} instance using the EntityManager and entity
+     * type of this repository.
+     * 
+     * @return a QueryFactory instance
+     */
+    protected QueryFactory<T> getQueryFactory() {
+        if (queryFactory == null) {
+            queryFactory = new QueryFactory<>(getEntityClass(), getEntityManager());
+        }
+
+        return queryFactory;
     }
 
     @Override
@@ -72,7 +99,7 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
     @Override
     public long count() {
         try {
-            return createCountQuery().getSingleResult();
+            return getQueryFactory().count().getSingleResult();
         } catch (javax.persistence.PersistenceException e) {
             throw new PersistenceException(e);
         }
@@ -81,9 +108,96 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
     @Override
     public long count(Filter filter) {
         try {
-            return getEntityManager().createQuery(translateCountQuery(filter)).getSingleResult();
+            return getQueryFactory().count(filter).getSingleResult();
         } catch (javax.persistence.PersistenceException e) {
             throw new PersistenceException(e);
+        }
+    }
+
+    @Override
+    public T get(Object id) {
+        return getEntityManager().find(getEntityClass(), id);
+    }
+
+    @Override
+    public List<T> getAll() {
+        try {
+            return getQueryFactory().select().getResultList();
+        } catch (javax.persistence.PersistenceException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    @Override
+    public List<T> getAll(OrderBy order) {
+        try {
+            return getQueryFactory().select(order).getResultList();
+        } catch (javax.persistence.PersistenceException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    @Override
+    public List<T> getPage(int limit, int offset) {
+        try {
+            TypedQuery<T> q = getQueryFactory().select();
+            q.setFirstResult(offset).setMaxResults(limit);
+            return q.getResultList();
+        } catch (javax.persistence.PersistenceException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    @Override
+    public List<T> getPage(OrderBy order, int limit, int offset) {
+        try {
+            TypedQuery<T> q = getQueryFactory().select(order);
+            q.setFirstResult(offset).setMaxResults(limit);
+            return q.getResultList();
+        } catch (javax.persistence.PersistenceException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    @Override
+    public List<T> find(Filter filter) {
+        try {
+            return getQueryFactory().select(filter).getResultList();
+        } catch (javax.persistence.PersistenceException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    @Override
+    // CHECKSTYLE:OFF query api will be abstracted in the future
+    public List<T> findPage(Filter filter, OrderBy order, int limit, int offset) {
+        // CHECKSTYLE:ON
+        try {
+            TypedQuery<T> query = getQueryFactory().select(filter, order);
+            return query.setFirstResult(offset).setMaxResults(limit).getResultList();
+        } catch (javax.persistence.PersistenceException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * Finds an entity by a given attribute. Returns null if none was found.
+     *
+     * @param attribute the attribute to search for
+     * @param value the value
+     * @return the entity or null if none was found
+     */
+    public T findOneByAttribute(String attribute, Object value) {
+        CriteriaBuilder cb = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<T> query = cb.createQuery(getEntityClass());
+        Root<T> from = query.from(getEntityClass());
+
+        query.where(cb.equal(from.get(attribute), value));
+
+        try {
+            return getEntityManager().createQuery(query).getSingleResult();
+        } catch (NoResultException e) {
+            return null;
         }
     }
 
@@ -171,151 +285,16 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
         });
     }
 
-    @Override
-    public T get(Object id) {
-        return getEntityManager().find(getEntityClass(), id);
-    }
-
-    @Override
-    public List<T> getAll() {
-        try {
-            return createBasicQuery().getResultList();
-        } catch (javax.persistence.PersistenceException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
-    @Override
-    public List<T> getAll(OrderBy order) {
-        try {
-            return getEntityManager().createQuery(createBasicCriteriaQuery(order)).getResultList();
-        } catch (javax.persistence.PersistenceException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
-    @Override
-    public List<T> getPage(int limit, int offset) {
-        try {
-            TypedQuery<T> q = createBasicQuery();
-            q.setFirstResult(offset).setMaxResults(limit);
-            return q.getResultList();
-        } catch (javax.persistence.PersistenceException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
-    @Override
-    public List<T> getPage(OrderBy order, int limit, int offset) {
-        try {
-            TypedQuery<T> q = getEntityManager().createQuery(createBasicCriteriaQuery(order));
-            q.setFirstResult(offset).setMaxResults(limit);
-            return q.getResultList();
-        } catch (javax.persistence.PersistenceException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
-    @Override
-    public List<T> find(Filter filter) {
-        try {
-            return getEntityManager().createQuery(translateQuery(filter)).getResultList();
-        } catch (javax.persistence.PersistenceException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
-    @Override
-    // CHECKSTYLE:OFF query api will be abstracted in the future
-    public List<T> findPage(Filter filter, OrderBy order, int limit, int offset) {
-        // CHECKSTYLE:ON
-        try {
-            TypedQuery<T> query = getEntityManager().createQuery(translateQuery(filter, order));
-            return query.setFirstResult(offset).setMaxResults(limit).getResultList();
-        } catch (javax.persistence.PersistenceException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
-    public Class<T> getEntityClass() {
-        return entityClass;
-    }
-
-    public void setEntityManager(EntityManager entityManager) {
-        this.entityManager = entityManager;
-    }
-
-    public EntityManager getEntityManager() {
-        return entityManager;
-    }
-
     /**
-     * Converts the given Filter to a criteria query.
+     * Executes the given command using an EntityManagerCommandExecutor.
      *
-     * @param filter the filter
-     * @return a new JPA CriteriaQuery
+     * @param command the command to execute
      */
-    protected CriteriaQuery<T> translateQuery(Filter filter) {
-        CriteriaBuilder cb = getEntityManager().getCriteriaBuilder();
-        CriteriaQuery<T> query = cb.createQuery(getEntityClass());
-        Root<T> from = query.from(getEntityClass());
-
-        Predicate where = new JpaCriteriaMapper(from, cb).create(filter);
-
-        return query.where(where);
-    }
-
-    /**
-     * Converts the given Filter to a criteria query.
-     *
-     * @param filter the filter
-     * @param orderBy the order by clause
-     * @return a new JPA CriteriaQuery
-     */
-    protected CriteriaQuery<T> translateQuery(Filter filter, OrderBy orderBy) {
-        CriteriaBuilder cb = getEntityManager().getCriteriaBuilder();
-        CriteriaQuery<T> query = cb.createQuery(getEntityClass());
-        Root<T> from = query.from(getEntityClass());
-
-        JpaCriteriaMapper criteriaMapper = new JpaCriteriaMapper(from, cb);
-
-        return query.where(criteriaMapper.create(filter)).orderBy(criteriaMapper.create(orderBy));
-    }
-
-    /**
-     * Converts the given Filter to a criteria query.
-     *
-     * @param filter the filter
-     * @return a new JPA CriteriaQuery
-     */
-    protected CriteriaQuery<Long> translateCountQuery(Filter filter) {
-        CriteriaBuilder cb = getEntityManager().getCriteriaBuilder();
-        CriteriaQuery<Long> query = cb.createQuery(Long.class);
-        Root<T> from = query.from(getEntityClass());
-
-        Predicate where = new JpaCriteriaMapper(from, cb).create(filter);
-
-        return query.select(cb.count(from)).where(where);
-    }
-
-    /**
-     * Finds an entity by a given attribute. Returns null if none was found.
-     *
-     * @param attribute the attribute to search for
-     * @param value the value
-     * @return the entity or null if none was found
-     */
-    protected T findOneByAttribute(String attribute, Object value) {
-        CriteriaBuilder cb = getEntityManager().getCriteriaBuilder();
-        CriteriaQuery<T> query = cb.createQuery(getEntityClass());
-        Root<T> from = query.from(getEntityClass());
-
-        query.where(cb.equal(from.get(attribute), value));
-
+    protected void execute(EntityManagerCommand command) {
         try {
-            return getEntityManager().createQuery(query).getSingleResult();
-        } catch (NoResultException e) {
-            return null;
+            new EntityManagerCommandExecutor(getEntityManager()).execute(command);
+        } catch (javax.persistence.PersistenceException e) {
+            throw new PersistenceException(e);
         }
     }
 
@@ -335,115 +314,6 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
      */
     protected void onAfterRemove(T entity) {
         // hook
-    }
-
-    /**
-     * Executes the given command using an EntityManagerCommandExecutor.
-     *
-     * @param command the command to execute
-     */
-    protected void execute(EntityManagerCommand command) {
-        try {
-            new EntityManagerCommandExecutor(getEntityManager()).execute(command);
-        } catch (javax.persistence.PersistenceException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
-    /**
-     * Creates a new TypedQuery for the given qlString.
-     *
-     * @param qlString the query
-     * @return a TypedQuery
-     */
-    protected TypedQuery<T> createQuery(String qlString) {
-        return getEntityManager().createQuery(qlString, getEntityClass());
-    }
-
-    /**
-     * Creates a new TypedQuery for the given qlString and sets the given parameters in the same order.
-     *
-     * @param qlString the query
-     * @param parameters the parameters to set
-     * @return a TypedQuery
-     */
-    protected TypedQuery<T> createQuery(String qlString, Object... parameters) {
-        TypedQuery<T> query = createQuery(qlString);
-
-        for (int i = 0; i < parameters.length; i++) {
-            query.setParameter(i + 1, parameters[i]);
-        }
-
-        return query;
-    }
-
-    /**
-     * Creates a new TypedQuery that queries the amount of entities this repository manages.
-     *
-     * @return a query
-     */
-    protected TypedQuery<Long> createCountQuery() {
-        return createCountQuery(getEntityClass());
-    }
-
-    /**
-     * Creates a new TypedQuery that queries the amount of entities of the given entity class.
-     *
-     * @param entityType the entity class to be queries
-     * @return a query
-     */
-    protected TypedQuery<Long> createCountQuery(Class<T> entityType) {
-        return entityManager.createQuery("SELECT COUNT(e) FROM " + entityType.getSimpleName() + " e", Long.class);
-    }
-
-    /**
-     * Creates a new query that is the basis for the {@link #getAll()} call. In the basic case this is a
-     * <code>"SELECT e FROM &lt;Type&gt; e"</code> query for the entity this repository manages.
-     *
-     * @return a typed query
-     */
-    protected TypedQuery<T> createBasicQuery() {
-        return createBasicQuery(getEntityClass());
-    }
-
-    /**
-     * Creates a new query that is the basis for the {@link #getAll()} call for the given entity type. In the basic case
-     * this is a <code>"SELECT e FROM &lt;Type&gt; e"</code> query for the given entity type.
-     *
-     * @param entityType the entity class to be queried
-     * @param <E> the entity class type
-     * @return a typed query
-     */
-    protected <E> TypedQuery<E> createBasicQuery(Class<E> entityType) {
-        return entityManager.createQuery("SELECT e FROM " + entityType.getSimpleName() + " e", entityType);
-    }
-
-    /**
-     * Creates a new basic criteria query with the entity class managed by this repository.
-     *
-     * @param order the order by clause
-     * @return a criteria query
-     */
-    protected CriteriaQuery<T> createBasicCriteriaQuery(OrderBy order) {
-        return createBasicCriteriaQuery(getEntityClass(), order);
-    }
-
-    /**
-     * Creates a new basic criteria query for the given entity class.
-     *
-     * @param entityType the entity type
-     * @param order the order by clause
-     * @param <E> the entity type
-     * @return a criteria query
-     */
-    protected <E> CriteriaQuery<E> createBasicCriteriaQuery(Class<E> entityType, OrderBy order) {
-        CriteriaBuilder cb = getEntityManager().getCriteriaBuilder();
-        CriteriaQuery<E> query = cb.createQuery(entityType);
-        Root<E> from = query.from(entityType);
-
-        query.orderBy(new JpaCriteriaMapper(from, cb).create(order));
-
-        return query;
     }
 
 }
