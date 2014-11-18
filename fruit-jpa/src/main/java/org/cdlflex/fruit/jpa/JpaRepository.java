@@ -50,14 +50,21 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
      */
     private final Class<T> entityClass;
 
+    private TransactionManagementType transactionManagementType;
+
     private QueryFactory<T> queryFactory;
 
     public JpaRepository(Class<T> entityClass) {
+        this(entityClass, TransactionManagementType.SELF);
+    }
+
+    public JpaRepository(Class<T> entityClass, TransactionManagementType transactionManagementType) {
         if (entityClass == null) {
             throw new IllegalArgumentException("entityClass can not be null");
         }
 
         this.entityClass = entityClass;
+        this.transactionManagementType = transactionManagementType;
     }
 
     public Class<T> getEntityClass() {
@@ -70,6 +77,14 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
 
     public EntityManager getEntityManager() {
         return entityManager;
+    }
+
+    public TransactionManagementType getTransactionManagementType() {
+        return transactionManagementType;
+    }
+
+    public void setTransactionManagementType(TransactionManagementType transactionManagementType) {
+        this.transactionManagementType = transactionManagementType;
     }
 
     /**
@@ -292,9 +307,19 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
      */
     protected void execute(EntityManagerCommand command) {
         try {
-            new EntityManagerCommandExecutor(getEntityManager()).execute(command);
+            getEntityManagerCommandExecutor().execute(command);
         } catch (javax.persistence.PersistenceException e) {
             throw new PersistenceException(e);
+        }
+    }
+
+    protected EntityManagerCommandExecutor getEntityManagerCommandExecutor() {
+        switch (getTransactionManagementType()) {
+            case CONTAINER:
+                return new DefaultEntityManagerCommandExecutor(getEntityManager());
+            case SELF:
+            default:
+                return new TransactionalEntityManagerCommandExecutor(getEntityManager());
         }
     }
 

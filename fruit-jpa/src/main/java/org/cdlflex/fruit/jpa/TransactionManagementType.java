@@ -14,14 +14,9 @@
 package org.cdlflex.fruit.jpa;
 
 /**
- * Executes EntityManagerCommands.
+ * TransactionManagementType.
  */
-public interface EntityManagerCommandExecutor {
-
-    /**
-     * Execute the given command around a transaction.
-     * 
-     * @param command the command to execute.
-     */
-    public void execute(EntityManagerCommand command);
+public enum TransactionManagementType {
+    SELF,
+    CONTAINER
 }
