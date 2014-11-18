@@ -22,6 +22,7 @@
   <modules>
     <module>fruit-core</module>
     <module>fruit-jpa</module>
+    <module>fruit-util</module>
   </modules>
 
   <licenses>
