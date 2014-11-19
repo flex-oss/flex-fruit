@@ -50,21 +50,21 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
      */
     private final Class<T> entityClass;
 
-    private TransactionManagementType transactionManagementType;
+    private TransactionType transactionType;
 
     private QueryFactory<T> queryFactory;
 
     public JpaRepository(Class<T> entityClass) {
-        this(entityClass, TransactionManagementType.SELF);
+        this(entityClass, TransactionType.RESOURCE_LOCAL);
     }
 
-    public JpaRepository(Class<T> entityClass, TransactionManagementType transactionManagementType) {
+    public JpaRepository(Class<T> entityClass, TransactionType transactionType) {
         if (entityClass == null) {
             throw new IllegalArgumentException("entityClass can not be null");
         }
 
         this.entityClass = entityClass;
-        this.transactionManagementType = transactionManagementType;
+        this.transactionType = transactionType;
     }
 
     public Class<T> getEntityClass() {
@@ -79,12 +79,12 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
         return entityManager;
     }
 
-    public TransactionManagementType getTransactionManagementType() {
-        return transactionManagementType;
+    public TransactionType getTransactionType() {
+        return transactionType;
     }
 
-    public void setTransactionManagementType(TransactionManagementType transactionManagementType) {
-        this.transactionManagementType = transactionManagementType;
+    public void setTransactionType(TransactionType transactionType) {
+        this.transactionType = transactionType;
     }
 
     /**
@@ -314,10 +314,10 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
     }
 
     protected EntityManagerCommandExecutor getEntityManagerCommandExecutor() {
-        switch (getTransactionManagementType()) {
-            case CONTAINER:
+        switch (getTransactionType()) {
+            case JTA:
                 return new DefaultEntityManagerCommandExecutor(getEntityManager());
-            case SELF:
+            case RESOURCE_LOCAL:
             default:
                 return new TransactionalEntityManagerCommandExecutor(getEntityManager());
         }

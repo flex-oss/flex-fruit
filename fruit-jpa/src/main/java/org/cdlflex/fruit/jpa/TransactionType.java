@@ -14,9 +14,9 @@
 package org.cdlflex.fruit.jpa;
 
 /**
- * TransactionManagementType.
+ * TransactionType.
  */
-public enum TransactionManagementType {
-    SELF,
-    CONTAINER
+public enum TransactionType {
+    RESOURCE_LOCAL,
+    JTA
 }
