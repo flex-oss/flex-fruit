@@ -15,6 +15,8 @@ package org.cdlflex.fruit.jpa.model;
 
 public class NoConstructorModel extends ManagedEntity {
 
+    private static final long serialVersionUID = 1L;
+
     public NoConstructorModel(String shoulHaveDefaultConstructor) {
 
     }

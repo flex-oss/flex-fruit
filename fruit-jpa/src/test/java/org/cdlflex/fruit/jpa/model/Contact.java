@@ -19,6 +19,8 @@ import javax.persistence.Entity;
 @Entity
 public class Contact extends ManagedEntity {
 
+    private static final long serialVersionUID = 1L;
+
     @Column
     private String email;
 

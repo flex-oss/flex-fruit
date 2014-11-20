@@ -23,6 +23,8 @@ import org.cdlflex.fruit.Identifiable;
 @MappedSuperclass
 public class ManagedEntity implements Identifiable<Long> {
 
+    private static final long serialVersionUID = 1L;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

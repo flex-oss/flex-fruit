@@ -21,6 +21,8 @@ import javax.persistence.OneToOne;
 @Entity
 public class Person extends ManagedEntity {
 
+    private static final long serialVersionUID = 1L;
+
     @Column
     private String name;
 
