@@ -34,6 +34,40 @@ public class PersonRepositoryTest extends GenericJpaRepositoryTest<Person, JpaRe
     }
 
     @Test
+    public void save_update_updatesValuesCorrectly() throws Exception {
+        Person p = new Person("p");
+        p.setAge(1);
+
+        getRepository().save(p);
+
+        p.setAge(2);
+
+        getRepository().save(p);
+
+        assertThat(p.getAge(), is(2));
+        assertThat(getRepository().get(1L).getAge(), is(2));
+    }
+
+    @Test
+    public void save_update_persistsValuesCorrectly() throws Exception {
+        Object[] arr;
+
+        Person p = new Person("p");
+        p.setAge(1);
+        getRepository().save(p);
+
+        arr = (Object[]) getEntityManager().createNativeQuery("SELECT name, age FROM PERSON").getSingleResult();
+        assertThat((String) arr[0], is("p"));
+        assertThat((int) arr[1], is(1));
+
+        p.setAge(2);
+        getRepository().save(p);
+        arr = (Object[]) getEntityManager().createNativeQuery("SELECT name, age FROM PERSON").getSingleResult();
+        assertThat((String) arr[0], is("p"));
+        assertThat((int) arr[1], is(2));
+    }
+
+    @Test
     public void findByForeignAttribute_returnsCorrectResult() throws Exception {
         Person jack = new Person("Jack");
         jack.setContact(new Contact("admin@example.com", "12345"));

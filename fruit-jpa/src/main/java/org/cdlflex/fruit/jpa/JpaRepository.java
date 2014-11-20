@@ -220,7 +220,11 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
             @Override
             public void execute(EntityManager em, EntityTransaction tx) {
                 onBeforePersist(entity);
-                em.persist(entity);
+                if (!em.contains(entity)) {
+                    em.persist(entity);
+                } else {
+                    em.flush();
+                }
             }
 
             @Override
@@ -237,16 +241,27 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
     @Override
     public void save(final Collection<T> entities) {
         execute(new EntityManagerCommand() {
+            boolean flush = false;
+
             @Override
             public void execute(EntityManager em, EntityTransaction tx) {
                 for (T e : entities) {
                     onBeforePersist(e);
-                    em.persist(e);
+                    if (!em.contains(e)) {
+                        em.persist(e);
+                    } else {
+                        flush = true;
+                    }
+                }
+
+                if (flush) {
+                    em.flush();
                 }
             }
 
             @Override
             public void onAfterCommit(EntityManager em, EntityTransaction tx) {
+
             }
 
             @Override
