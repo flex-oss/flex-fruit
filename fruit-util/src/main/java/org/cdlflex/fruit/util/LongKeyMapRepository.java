@@ -37,7 +37,7 @@ public class LongKeyMapRepository<T extends Identifiable<Long>> extends MapRepos
         super(registry);
 
         // find the highest key value already in the registry and start iterating from there
-        idGenerator = new AtomicLong(Collections.max(registry.keySet()));
+        idGenerator = (!registry.isEmpty()) ? new AtomicLong(Collections.max(registry.keySet())) : new AtomicLong();
     }
 
     @Override
