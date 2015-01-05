@@ -48,7 +48,8 @@ public interface Repository<T extends Identifiable<?>> {
     long count(Filter filter);
 
     /**
-     * Persists the given entity. This is an "upersert" command.
+     * Persists the given entity. This is an upsert/merge command (i.e. creates non-persistent and updates existing
+     * entities).
      *
      * @param entity the entity to persist
      * @throws PersistenceException if an exception occurs in the underlying persistence system
@@ -56,7 +57,8 @@ public interface Repository<T extends Identifiable<?>> {
     void save(T entity);
 
     /**
-     * Persists the given collection of entities. This is an "upersert" command.
+     * Persists the given collection of entities. This is an upsert/merge command (i.e. creates non-persistent and
+     * updates existing entities).
      *
      * @param entity the entities to persist
      * @throws PersistenceException if an exception occurs in the underlying persistence system
