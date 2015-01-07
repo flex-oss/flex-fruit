@@ -54,3 +54,8 @@ Building
 Build the entire project using Maven
 
     mvn clean install
+
+Documentation
+-------------
+
+You can find the documentation on github in the [wiki section](https://github.com/flex-oss/flex-fruit/wiki)
