@@ -19,6 +19,7 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
 import javax.persistence.NoResultException;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -191,6 +192,29 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
         } catch (javax.persistence.PersistenceException e) {
             throw new PersistenceException(e);
         }
+    }
+
+    @Override
+    public Object nativeQuery(Object query) throws UnsupportedOperationException {
+        try {
+            if (query instanceof Query) {
+                return ((Query) query).getResultList();
+            } else if (query instanceof CriteriaQuery) {
+                return nativeQuery(getEntityManager().createQuery((CriteriaQuery) query));
+            } else if (query instanceof String) {
+                return nativeQuery(entityManager.createQuery((String) query));
+            } else {
+                throw new UnsupportedOperationException("Can not dispatch queries of type " + query.getClass());
+            }
+        } catch (javax.persistence.PersistenceException | IllegalArgumentException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public List<T> nativeListQuery(Object query) throws UnsupportedOperationException {
+        return (List<T>) nativeQuery(query);
     }
 
     /**

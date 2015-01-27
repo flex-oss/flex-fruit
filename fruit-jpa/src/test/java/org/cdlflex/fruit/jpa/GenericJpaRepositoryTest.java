@@ -15,6 +15,7 @@ package org.cdlflex.fruit.jpa;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -26,11 +27,15 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.persistence.EntityTransaction;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 
 import org.cdlflex.fruit.Connective;
 import org.cdlflex.fruit.Filter;
 import org.cdlflex.fruit.Operator;
 import org.cdlflex.fruit.OrderBy;
+import org.cdlflex.fruit.PersistenceException;
 import org.cdlflex.fruit.Predicate;
 import org.cdlflex.fruit.SortOrder;
 import org.cdlflex.fruit.jpa.model.ManagedEntity;
@@ -329,6 +334,84 @@ public abstract class GenericJpaRepositoryTest<E extends ManagedEntity, R extend
         JpaRepository<NoConstructorModel> rep = new JpaRepository<>(NoConstructorModel.class);
 
         assertNull(rep.create());
+    }
+
+    @Test
+    public void nativeQuery_qlString_returnsCorrectResult() throws Exception {
+        E e1 = repository.create();
+        E e2 = repository.create();
+
+        repository.save(Arrays.asList(e1, e2));
+        String ql = "SELECT e FROM " + repository.getEntityClass().getSimpleName() + " e WHERE e.id=2";
+
+        Object resultObject = repository.nativeQuery(ql);
+        assertThat(resultObject, is(instanceOf(List.class)));
+
+        List<E> resultList = (List<E>) resultObject;
+        assertEquals(1, resultList.size());
+        assertEquals(2L, (long) resultList.get(0).getId());
+    }
+
+    @Test
+    public void nativeListQuery_qlString_returnsCorrectResult() throws Exception {
+        E e1 = repository.create();
+        E e2 = repository.create();
+
+        repository.save(Arrays.asList(e1, e2));
+        String ql = "SELECT e FROM " + repository.getEntityClass().getSimpleName() + " e WHERE e.id=2";
+
+        List<E> resultList = repository.nativeListQuery(ql);
+
+        assertEquals(1, resultList.size());
+        assertEquals(2L, (long) resultList.get(0).getId());
+    }
+
+    @Test
+    public void nativeQuery_typedQuery_returnsCorrectResult() throws Exception {
+        E e1 = repository.create();
+        E e2 = repository.create();
+
+        repository.save(Arrays.asList(e1, e2));
+        Object query =
+            getEntityManager().createQuery(
+                    "SELECT e FROM " + repository.getEntityClass().getSimpleName() + " e WHERE e.id = 2");
+
+        Object resultObject = repository.nativeQuery(query);
+        assertThat(resultObject, is(instanceOf(List.class)));
+
+        List<E> resultList = (List<E>) resultObject;
+        assertEquals(1, resultList.size());
+        assertEquals(2L, (long) resultList.get(0).getId());
+    }
+
+    @Test
+    public void nativeQuery_criteriaQuery_returnsCorrectResult() throws Exception {
+        E e1 = repository.create();
+        E e2 = repository.create();
+
+        repository.save(Arrays.asList(e1, e2));
+
+        CriteriaBuilder cb = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<E> query = cb.createQuery(repository.getEntityClass());
+        Root<E> from = query.from(repository.getEntityClass());
+        query.where(cb.equal(from.get("id"), 2L));
+
+        Object resultObject = repository.nativeQuery(query);
+        assertThat(resultObject, is(instanceOf(List.class)));
+
+        List<E> resultList = (List<E>) resultObject;
+        assertEquals(1, resultList.size());
+        assertEquals(2L, (long) resultList.get(0).getId());
+    }
+
+    @Test(expected = PersistenceException.class)
+    public void nativeQuery_qlString_invalidSyntax_throwsPersistenceException() throws Exception {
+        repository.nativeQuery("INVALID SYNTAX");
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void nativeQuery_withUnknownQueryObject_throwsException() throws Exception {
+        repository.nativeQuery(new Object());
     }
 
     public R getRepository() {

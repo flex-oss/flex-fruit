@@ -122,6 +122,16 @@ public abstract class MapRepository<K, T extends Identifiable<K>> implements Rep
     }
 
     @Override
+    public Object nativeQuery(Object query) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("There is no native query for MapRepositories");
+    }
+
+    @Override
+    public List<T> nativeListQuery(Object query) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("There is no native query for MapRepositories");
+    }
+
+    @Override
     public void remove(T entity) {
         registry.remove(entity.getId());
     }

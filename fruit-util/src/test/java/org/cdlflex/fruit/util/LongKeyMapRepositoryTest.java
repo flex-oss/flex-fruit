@@ -152,4 +152,14 @@ public class LongKeyMapRepositoryTest {
         repository.create();
     }
 
+    @Test(expected = UnsupportedOperationException.class)
+    public void nativeQuery_notImplemented() throws Exception {
+        repository.nativeQuery(new Object());
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void nativeListQuery_notImplemented() throws Exception {
+        repository.nativeListQuery(new Object());
+    }
+
 }
