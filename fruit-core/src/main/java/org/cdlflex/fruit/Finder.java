@@ -95,4 +95,27 @@ public interface Finder<T extends Identifiable<?>> {
     // CHECKSTYLE:OFF query API will be abstracted in the future
     List<T> findPage(Filter filter, OrderBy order, int limit, int offset);
     // CHECKSTYLE: ON
+
+    /**
+     * Dispatches a query in the form of whatever the underlying implementation accepts. This may vary greatly for
+     * various implementation providers. E.g. for a JDBC implementation, the query object could be an SQL string.
+     * <p/>
+     * The return value is also an implementation specific representation of a result. In a JDBC implementation, this
+     * could be a {@code ResultSet}.
+     * 
+     * @param query a query object
+     * @return a query result
+     * @throws UnsupportedOperationException if the given query object type is not supported by the provider
+     */
+    Object nativeQuery(Object query) throws UnsupportedOperationException;
+
+    /**
+     * Dispatches a native query and returns a list of results as mapped entities.
+     *
+     * @see #nativeQuery(Object)
+     * @param query a query object
+     * @return a list of entities
+     * @throws UnsupportedOperationException if the given query object type is not supported by the provider
+     */
+    List<T> nativeListQuery(Object query) throws UnsupportedOperationException;
 }
