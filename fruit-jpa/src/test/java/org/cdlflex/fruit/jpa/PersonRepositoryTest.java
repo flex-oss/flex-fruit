@@ -23,6 +23,7 @@ import java.util.List;
 import org.cdlflex.fruit.Filter;
 import org.cdlflex.fruit.Operator;
 import org.cdlflex.fruit.Predicate;
+import org.cdlflex.fruit.Query;
 import org.cdlflex.fruit.jpa.model.Contact;
 import org.cdlflex.fruit.jpa.model.Person;
 import org.junit.Test;
@@ -81,7 +82,7 @@ public class PersonRepositoryTest extends GenericJpaRepositoryTest<Person, JpaRe
         getRepository().save(Arrays.asList(jack, jill, adam));
 
         List<Person> result =
-            getRepository().find(new Filter(new Predicate("contact.email", Operator.LIKE, "admin@%")));
+            getRepository().find(new Query(new Filter(new Predicate("contact.email", Operator.LIKE, "admin@%"))));
 
         assertThat(result.size(), is(2));
         assertThat(result, hasItems(jack, jill));

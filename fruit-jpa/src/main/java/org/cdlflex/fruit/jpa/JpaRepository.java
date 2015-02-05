@@ -19,7 +19,6 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
 import javax.persistence.NoResultException;
-import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -29,6 +28,7 @@ import org.cdlflex.fruit.Filter;
 import org.cdlflex.fruit.Identifiable;
 import org.cdlflex.fruit.OrderBy;
 import org.cdlflex.fruit.PersistenceException;
+import org.cdlflex.fruit.Query;
 import org.cdlflex.fruit.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -152,53 +152,16 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
     }
 
     @Override
-    public List<T> getPage(int limit, int offset) {
-        try {
-            TypedQuery<T> q = getQueryFactory().select();
-            q.setFirstResult(offset).setMaxResults(limit);
-            return q.getResultList();
-        } catch (javax.persistence.PersistenceException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
-    @Override
-    public List<T> getPage(OrderBy order, int limit, int offset) {
-        try {
-            TypedQuery<T> q = getQueryFactory().select(order);
-            q.setFirstResult(offset).setMaxResults(limit);
-            return q.getResultList();
-        } catch (javax.persistence.PersistenceException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
-    @Override
-    public List<T> find(Filter filter) {
-        try {
-            return getQueryFactory().select(filter).getResultList();
-        } catch (javax.persistence.PersistenceException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
-    @Override
-    // CHECKSTYLE:OFF query api will be abstracted in the future
-    public List<T> findPage(Filter filter, OrderBy order, int limit, int offset) {
-        // CHECKSTYLE:ON
-        try {
-            TypedQuery<T> query = getQueryFactory().select(filter, order);
-            return query.setFirstResult(offset).setMaxResults(limit).getResultList();
-        } catch (javax.persistence.PersistenceException e) {
-            throw new PersistenceException(e);
-        }
+    public List<T> find(Query query) {
+        TypedQuery<T> q = getQueryFactory().select(query);
+        return q.getResultList();
     }
 
     @Override
     public Object nativeQuery(Object query) throws UnsupportedOperationException {
         try {
-            if (query instanceof Query) {
-                return ((Query) query).getResultList();
+            if (query instanceof javax.persistence.Query) {
+                return ((javax.persistence.Query) query).getResultList();
             } else if (query instanceof CriteriaQuery) {
                 return nativeQuery(getEntityManager().createQuery((CriteriaQuery) query));
             } else if (query instanceof String) {

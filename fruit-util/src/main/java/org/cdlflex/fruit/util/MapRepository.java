@@ -22,6 +22,7 @@ import java.util.Map;
 import org.cdlflex.fruit.Filter;
 import org.cdlflex.fruit.Identifiable;
 import org.cdlflex.fruit.OrderBy;
+import org.cdlflex.fruit.Query;
 import org.cdlflex.fruit.Repository;
 
 /**
@@ -52,7 +53,7 @@ public abstract class MapRepository<K, T extends Identifiable<K>> implements Rep
 
     @Override
     public long count(Filter filter) {
-        return find(filter).size();
+        return find(new Query(filter)).size();
     }
 
     @Override
@@ -89,36 +90,36 @@ public abstract class MapRepository<K, T extends Identifiable<K>> implements Rep
     }
 
     @Override
-    public List<T> getPage(int limit, int offset) {
-        return getAll().subList(offset, offset + limit);
-    }
+    public List<T> find(Query query) {
+        List<T> all = getAll();
+        if (query.getFilter() != null) {
+            retain(all, query.getFilter());
+        }
+        if (query.getOrderBy() != null) {
+            sort(all, query.getOrderBy());
+        }
 
-    @Override
-    public List<T> getPage(OrderBy order, int limit, int offset) {
-        List<T> page = getPage(limit, offset);
-        sort(page, order);
-        return page;
+        Integer limit = query.getLimit();
+        Integer offset = query.getOffset();
+
+        if (offset != null) {
+            if (limit != null) {
+                return all.subList(offset, offset + limit);
+            } else {
+                return all.subList(offset, all.size());
+            }
+        } else {
+            if (limit != null) {
+                return all.subList(0, limit);
+            }
+        }
+
+        return all;
     }
 
     @Override
     public T create() {
         throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public List<T> find(Filter filter) {
-        List<T> all = getAll();
-        retain(all, filter);
-        return all;
-    }
-
-    @Override
-    // CHECKSTYLE:OFF inherited
-    public List<T> findPage(Filter filter, OrderBy order, int limit, int offset) {
-        // CHECKSTYLE:ON
-        List<T> find = find(filter);
-        sort(find, order);
-        return find.subList(offset, offset + limit);
     }
 
     @Override

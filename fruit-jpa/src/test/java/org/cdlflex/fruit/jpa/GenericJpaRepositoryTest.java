@@ -37,6 +37,7 @@ import org.cdlflex.fruit.Operator;
 import org.cdlflex.fruit.OrderBy;
 import org.cdlflex.fruit.PersistenceException;
 import org.cdlflex.fruit.Predicate;
+import org.cdlflex.fruit.Query;
 import org.cdlflex.fruit.SortOrder;
 import org.cdlflex.fruit.jpa.model.ManagedEntity;
 import org.cdlflex.fruit.jpa.model.NoConstructorModel;
@@ -176,7 +177,9 @@ public abstract class GenericJpaRepositoryTest<E extends ManagedEntity, R extend
 
         repository.save(Arrays.asList(e1, e2, e3));
 
-        List<E> result = repository.getPage(new OrderBy("id", SortOrder.DESC), 2, 1);
+        Query query = new Query(new OrderBy("id", SortOrder.DESC), 2, 1);
+
+        List<E> result = repository.find(query);
 
         assertThat(result.size(), is(2));
         assertEquals(e2, result.get(0));
@@ -192,7 +195,7 @@ public abstract class GenericJpaRepositoryTest<E extends ManagedEntity, R extend
 
         repository.save(Arrays.asList(e1, e2, e3, e4));
 
-        List<E> page = repository.getPage(2, 1);
+        List<E> page = repository.find(new Query(2, 1));
 
         assertThat(page.size(), is(2));
         assertThat(page, hasItem(e2));
@@ -239,7 +242,7 @@ public abstract class GenericJpaRepositoryTest<E extends ManagedEntity, R extend
         repository.save(Arrays.asList(e1, e2, e3));
 
         Filter filter = new Filter().add("id", Operator.EQ, 2L);
-        List<E> result = getRepository().find(filter);
+        List<E> result = getRepository().find(new Query(filter));
 
         assertThat(result.size(), is(1));
         assertThat(result, hasItems(e2));
@@ -254,7 +257,7 @@ public abstract class GenericJpaRepositoryTest<E extends ManagedEntity, R extend
         repository.save(Arrays.asList(e1, e2, e3));
 
         Filter filter = new Filter().add(new Predicate("id", Operator.EQ, 2L).not());
-        List<E> result = getRepository().find(filter);
+        List<E> result = getRepository().find(new Query(filter));
 
         assertThat(result.size(), is(2));
         assertThat(result, hasItems(e1, e3));
@@ -269,7 +272,7 @@ public abstract class GenericJpaRepositoryTest<E extends ManagedEntity, R extend
         repository.save(Arrays.asList(e1, e2, e3));
 
         Filter filter = new Filter(Connective.OR).add(new Predicate("id", "=", 1L)).add(new Predicate("id", 2L));
-        List<E> result = getRepository().find(filter);
+        List<E> result = getRepository().find(new Query(filter));
 
         assertThat(result.size(), is(2));
         assertThat(result, hasItems(e1, e2));
@@ -286,7 +289,7 @@ public abstract class GenericJpaRepositoryTest<E extends ManagedEntity, R extend
         repository.save(Arrays.asList(e1, e2, e3, e4, e5));
 
         Filter filter = new Filter().add("id", Operator.GT, 2L);
-        List<E> result = getRepository().findPage(filter, new OrderBy("id", SortOrder.DESC), 2, 1);
+        List<E> result = getRepository().find(new Query(filter, new OrderBy("id", SortOrder.DESC), 2, 1));
 
         assertEquals(2, result.size());
         assertEquals(e4, result.get(0));

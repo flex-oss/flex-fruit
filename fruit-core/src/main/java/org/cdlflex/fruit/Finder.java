@@ -53,48 +53,13 @@ public interface Finder<T extends Identifiable<?>> {
     List<T> getAll(OrderBy order);
 
     /**
-     * Returns a limited amount of entities managed by this repository.
-     *
-     * @param limit the amount of entities that should be returned
-     * @param offset the starting index
-     * @return a page of entities
-     * @throws PersistenceException if an exception occurs in the underlying persistence system
-     */
-    List<T> getPage(int limit, int offset);
-
-    /**
-     * Returns a limited amount of entities managed by this repository.
-     *
-     * @param order the order by specification
-     * @param limit the amount of entities that should be returned
-     * @param offset the starting index
-     * @return a page of entities
-     * @throws PersistenceException if an exception occurs in the underlying persistence system
-     */
-    List<T> getPage(OrderBy order, int limit, int offset);
-
-    /**
-     * Returns all entries that satisfy the given filter.
-     *
-     * @param filter the filter
+     * Returns all entities that satisfy the given query.
+     * 
+     * @param query the query
      * @return a list of entities
      * @throws PersistenceException if an exception occurs in the underlying persistence system
      */
-    List<T> find(Filter filter);
-
-    /**
-     * Returns all entries that satisfy the given filter.
-     *
-     * @param filter the filter
-     * @param order the order by specification
-     * @param limit the amount of entities that should be returned
-     * @param offset the starting index
-     * @return a page of entities
-     * @throws PersistenceException if an exception occurs in the underlying persistence system
-     */
-    // CHECKSTYLE:OFF query API will be abstracted in the future
-    List<T> findPage(Filter filter, OrderBy order, int limit, int offset);
-    // CHECKSTYLE: ON
+    List<T> find(Query query);
 
     /**
      * Dispatches a query in the form of whatever the underlying implementation accepts. This may vary greatly for

@@ -22,6 +22,7 @@ import javax.persistence.criteria.Root;
 
 import org.cdlflex.fruit.Filter;
 import org.cdlflex.fruit.OrderBy;
+import org.cdlflex.fruit.Query;
 
 /**
  * Creates {@code javax.persistence.TypedQuery} instances for a given entity type.
@@ -47,10 +48,7 @@ public class QueryFactory<T> {
      * @return a query
      */
     public TypedQuery<Long> count() {
-        CriteriaQuery<Long> query = cb.createQuery(Long.class);
-        query.select(cb.count(query.from(getEntityClass())));
-
-        return getEntityManager().createQuery(query);
+        return count(null);
     }
 
     /**
@@ -64,9 +62,12 @@ public class QueryFactory<T> {
         CriteriaQuery<Long> query = cb.createQuery(Long.class);
         Root<T> from = query.from(getEntityClass());
 
-        Predicate where = new CriteriaMapper(from, cb).create(filter);
+        if (filter != null) {
+            Predicate where = new CriteriaMapper(from, cb).create(filter);
+            query.where(where);
+        }
 
-        return getEntityManager().createQuery(query.select(cb.count(from)).where(where));
+        return getEntityManager().createQuery(query.select(cb.count(from)));
     }
 
     /**
@@ -76,29 +77,22 @@ public class QueryFactory<T> {
      * @return a typed query
      */
     public TypedQuery<T> select() {
-        CriteriaQuery<T> query = cb.createQuery(getEntityClass());
-        query.from(getEntityClass());
-
-        return getEntityManager().createQuery(query);
+        return select(null, null);
     }
 
     /**
-     * Creates a new query that is the basis for the {@link JpaRepository#find(Filter)} call.
+     * Creates a new basic criteria query with the entity class managed by this repository.
      *
-     * @param filter the filter
-     * @return a typed query
+     * @param order the order by clause
+     * @return a criteria query
      */
-    public TypedQuery<T> select(Filter filter) {
-        CriteriaQuery<T> query = cb.createQuery(getEntityClass());
-        Root<T> from = query.from(getEntityClass());
-
-        Predicate where = new CriteriaMapper(from, cb).create(filter);
-
-        return getEntityManager().createQuery(query.where(where));
+    public TypedQuery<T> select(OrderBy order) {
+        return select(null, order);
     }
 
     /**
-     * Creates a new query that is the basis for the {@link JpaRepository#findPage(Filter, OrderBy, int, int)} call.
+     * Creates a new query that is the basis for the {@link JpaRepository#find(org.cdlflex.fruit.Query)} call without
+     * limit and offset.
      *
      * @param filter the filter
      * @param orderBy the order by clause
@@ -110,23 +104,38 @@ public class QueryFactory<T> {
 
         CriteriaMapper criteriaMapper = new CriteriaMapper(from, cb);
 
-        return getEntityManager().createQuery(
-                query.where(criteriaMapper.create(filter)).orderBy(criteriaMapper.create(orderBy)));
+        if (orderBy != null) {
+            query.orderBy(criteriaMapper.create(orderBy));
+        }
+        if (filter != null) {
+            query.where(criteriaMapper.create(filter));
+        }
+
+        return getEntityManager().createQuery(query);
     }
 
     /**
-     * Creates a new basic criteria query with the entity class managed by this repository.
-     *
-     * @param order the order by clause
-     * @return a criteria query
+     * Creates a new query that is the basis for the {@link JpaRepository#find(org.cdlflex.fruit.Query)} call. Depending
+     * on which parameters are set in the {@link org.cdlflex.fruit.Query} object, the query {@code TypedQuery} is built
+     * dynamically.
+     * 
+     * @param query the fruit query
+     * @return a jpa query
      */
-    public TypedQuery<T> select(OrderBy order) {
-        CriteriaQuery<T> query = cb.createQuery(getEntityClass());
-        Root<T> from = query.from(getEntityClass());
+    public TypedQuery<T> select(Query query) {
+        TypedQuery<T> q = select(query.getFilter(), query.getOrderBy());
 
-        query.orderBy(new CriteriaMapper(from, cb).create(order));
+        Integer limit = query.getLimit();
+        Integer offset = query.getOffset();
 
-        return getEntityManager().createQuery(query);
+        if (limit != null) {
+            q.setMaxResults(limit);
+        }
+        if (offset != null) {
+            q.setFirstResult(offset);
+        }
+
+        return q;
     }
 
     public Class<T> getEntityClass() {

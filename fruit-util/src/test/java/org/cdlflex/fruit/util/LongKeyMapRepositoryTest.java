@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.cdlflex.fruit.Query;
 import org.cdlflex.fruit.Repository;
 import org.cdlflex.fruit.util.model.Person;
 import org.junit.Before;
@@ -145,6 +146,22 @@ public class LongKeyMapRepositoryTest {
         assertTrue(all.contains(e1));
         assertTrue(all.contains(e2));
         assertTrue(all.contains(e3));
+    }
+
+    @Test
+    public void find_withLimitAndOffset_returnsCurrectSublist() throws Exception {
+        Person e1 = new Person();
+        Person e2 = new Person();
+        Person e3 = new Person();
+        Person e4 = new Person();
+
+        repository.save(Arrays.asList(e1, e2, e3, e4));
+
+        List<Person> page = repository.find(new Query(2, 1));
+
+        assertEquals(2, page.size());
+        assertTrue(page.contains(e2));
+        assertTrue(page.contains(e3));
     }
 
     @Test(expected = UnsupportedOperationException.class)
