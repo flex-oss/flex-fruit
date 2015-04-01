@@ -27,6 +27,7 @@ import org.cdlflex.fruit.Connective;
 import org.cdlflex.fruit.Filter;
 import org.cdlflex.fruit.Operator;
 import org.cdlflex.fruit.OrderBy;
+import org.cdlflex.fruit.Range;
 import org.cdlflex.fruit.SortOrder;
 import org.cdlflex.fruit.SortSpecification;
 
@@ -142,18 +143,24 @@ public class CriteriaMapper {
             case EQ:
                 return cb.equal(attribute, value);
             case GT:
-                return cb.gt(attribute, (Number) value);
+                return cb.greaterThan(attribute, (Comparable) value);
             case GTE:
                 return cb.greaterThanOrEqualTo(attribute, (Comparable) value);
             case LT:
-                return cb.lt(attribute, (Number) value);
+                return cb.lessThan(attribute, (Comparable) value);
             case LTE:
                 return cb.lessThanOrEqualTo(attribute, (Comparable) value);
             case LIKE:
                 return cb.like(attribute, String.valueOf(value));
+            case BETWEEN:
+                if (!(value instanceof Range)) {
+                    String msg = "BETWEEN operator requires a Range object, was " + value.getClass().getName();
+                    throw new IllegalStateException(msg);
+                }
+                Range range = (Range) value;
+                return cb.between(attribute, range.getStart(), range.getEnd());
             default:
                 throw new UnsupportedOperationException("Can not translate operator " + op);
         }
     }
-
 }

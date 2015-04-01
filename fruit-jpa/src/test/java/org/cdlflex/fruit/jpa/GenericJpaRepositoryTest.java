@@ -38,6 +38,7 @@ import org.cdlflex.fruit.OrderBy;
 import org.cdlflex.fruit.PersistenceException;
 import org.cdlflex.fruit.Predicate;
 import org.cdlflex.fruit.Query;
+import org.cdlflex.fruit.Range;
 import org.cdlflex.fruit.SortOrder;
 import org.cdlflex.fruit.jpa.model.ManagedEntity;
 import org.cdlflex.fruit.jpa.model.NoConstructorModel;
@@ -276,6 +277,41 @@ public abstract class GenericJpaRepositoryTest<E extends ManagedEntity, R extend
 
         assertThat(result.size(), is(2));
         assertThat(result, hasItems(e1, e2));
+    }
+
+    @Test
+    public void findByFilter_between_valueInRange_behavesCorrectly() throws Exception {
+        E e1 = repository.create();
+        E e2 = repository.create();
+        E e3 = repository.create();
+        E e4 = repository.create();
+
+        repository.save(Arrays.asList(e1, e2, e3, e4));
+
+        Filter filter = new Filter().add(new Predicate("id", Operator.BETWEEN, new Range<>(5L, 7L)));
+        List<E> result = getRepository().find(new Query(filter));
+        assertThat(result.size(), is(0));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void findByFilter_between_nonRangeObject_throwsException() throws Exception {
+        Filter filter = new Filter().add(new Predicate("id", Operator.BETWEEN, 0));
+        getRepository().find(new Query(filter));
+    }
+
+    @Test
+    public void findByFilter_between_valueNotInRange_behavesCorrectly() throws Exception {
+        E e1 = repository.create();
+        E e2 = repository.create();
+        E e3 = repository.create();
+        E e4 = repository.create();
+
+        repository.save(Arrays.asList(e1, e2, e3, e4));
+
+        Filter filter = new Filter().add(new Predicate("id", Operator.BETWEEN, new Range<>(1L, 3L)));
+        List<E> result = getRepository().find(new Query(filter));
+        assertThat(result.size(), is(3));
+        assertThat(result, hasItems(e1, e2, e3));
     }
 
     @Test
