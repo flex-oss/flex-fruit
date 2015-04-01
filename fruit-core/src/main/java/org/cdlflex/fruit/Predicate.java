@@ -79,7 +79,7 @@ public class Predicate implements Serializable {
      * @return this for chaining.
      */
     public Predicate not() {
-        setNot(true);
+        not = !not;
         return this;
     }
 
