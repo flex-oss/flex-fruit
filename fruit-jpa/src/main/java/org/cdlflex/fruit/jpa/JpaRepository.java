@@ -163,7 +163,7 @@ public class JpaRepository<T extends Identifiable<?>> implements Repository<T> {
             if (query instanceof javax.persistence.Query) {
                 return ((javax.persistence.Query) query).getResultList();
             } else if (query instanceof CriteriaQuery) {
-                return nativeQuery(getEntityManager().createQuery((CriteriaQuery) query));
+                return nativeQuery(getEntityManager().createQuery((CriteriaQuery<?>) query));
             } else if (query instanceof String) {
                 return nativeQuery(entityManager.createQuery((String) query));
             } else {
