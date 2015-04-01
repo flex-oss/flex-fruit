@@ -6,7 +6,7 @@ import java.io.Serializable;
  * A Query object represents a query that can be used to find entities in a Repository. It may contain a
  * {@link org.cdlflex.fruit.Filter} ({@code WHERE} clause) an {@link org.cdlflex.fruit.OrderBy} object ({@code ORDER}
  * clause), and limit and offset.
- * <p/>
+ * 
  * Null values of these parameters are considered as not set, e.g. a Query without a Filter object will not contain a
  * {@code WHERE} clause, but still be accepted by {@link org.cdlflex.fruit.Repository#find(Query)}.
  */

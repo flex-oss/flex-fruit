@@ -64,7 +64,7 @@ public interface Finder<T extends Identifiable<?>> {
     /**
      * Dispatches a query in the form of whatever the underlying implementation accepts. This may vary greatly for
      * various implementation providers. E.g. for a JDBC implementation, the query object could be an SQL string.
-     * <p/>
+     * 
      * The return value is also an implementation specific representation of a result. In a JDBC implementation, this
      * could be a {@code ResultSet}.
      * 
